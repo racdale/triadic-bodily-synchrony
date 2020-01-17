@@ -59,8 +59,6 @@ for (i in 1:l) {
   wccMansonData[i,6:17] = subset(mansonVect,select=desiredCols)
   mansonVect = mansonData[mansonData$chairs==revTyp&mansonData$triad==triad,]
   wccMansonData[i,6:17] = (wccMansonData[i,6:17] + subset(mansonVect,select=desiredCols))/2
-  #wccMansonDataRev[i,6:17] = subset(mansonVect,select=desiredCols)
-  #wccMansonDataRev$typ = revTyp
 }
 
 

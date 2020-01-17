@@ -1,11 +1,4 @@
 
-
-# Beckers, Jean-Marie, and M. Rixen. "EOF Calculations and Data Filling from Incomplete Oceanographic Datasets." Journal of Atmospheric and Oceanic Technology 20.12 (2003): 1839-1856.
-# http://stats.stackexchange.com/questions/35561/imputation-of-missing-values-for-pca
-# http://menugget.blogspot.de/2014/09/pca-eof-for-data-with-missing-values.html
-# http://menugget.blogspot.de/2012/10/dineof-data-interpolating-empirical.html
-source('dineof.R')
-
 #
 #  print out statistics from lmer
 #

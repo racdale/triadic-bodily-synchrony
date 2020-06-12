@@ -44,13 +44,14 @@ getData = function(flpath,fl,plotit=F) {
   for (i in 1:dim(a)[2]) { 
     a[,i] = as.numeric(as.character(a[,i]))
   }
-  bf = butter(8,.05)
+  bf = butter(8,.05,'low')
+  #fz=freqz(bf,Fs=30)
   filterMid = filter(bf,a$middlemag)
   
-  bf = butter(8,.05)
+  bf = butter(8,.05,'low')
   filterLeft = filter(bf,a$leftmag)
   
-  bf = butter(8,.05)
+  bf = butter(8,.05,'low')
   filterRight = filter(bf,a$rightmag)
 
   if (plotit) {
@@ -59,6 +60,7 @@ getData = function(flpath,fl,plotit=F) {
     par(mfrow=c(3,1),mar=c(4,4,2,2))
     plot(a$Time..s.NA[1:2000],a$leftmag[1:2000],
          col='grey',type='p',xlab='Time (s)',ylab='Magnitude change',main='Left member')
+    # alignment requires a 1s shift on filter...
     points(a$Time..s.NA[1:2000],filterLeft[31:2030],col='black',type='l')
     plot(a$Time..s.NA[1:2000],a$middlemag[1:2000],
          col='grey',type='p',xlab='Time (s)',ylab='Magnitude change',main='Center member')
@@ -105,9 +107,4 @@ plotCcfs = function(fl,wccres,ccfres) {
   dev.off()
     
 }
-
-
-
-
-
 

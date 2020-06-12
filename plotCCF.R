@@ -1,4 +1,5 @@
 # let's plot the ccf function for intact / surrogate
+
 plotfl = paste('figures/figure-4.pdf',sep='')
 pdf(file=plotfl,height=3.5,width=10)
 par(mfrow=c(1,3),mar=c(4,4,2,2))

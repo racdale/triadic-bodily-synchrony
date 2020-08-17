@@ -1,6 +1,5 @@
-# set working directory to repo's location
+# NB: set working directory to this file's location
 
-# libraries needed
 library(gdata) 
 library(signal)
 library(lme4)
@@ -13,21 +12,25 @@ source('functions.R') # variety of functions
 load('loadedSignals.RData') # the time series of body movements, from xls (see bodyExtract.R)
 
 #
-# source('computeCorrelations.R') # to build the RData files below
+# source('computeCorrelations.R') # to build the RData files below; need source('bodyExtract.R') 
 #
 
 load('wccData.RData') # windowed correlation values, with surrogates
 load('ccfresData.RData') # cross correlation functions across triads, with surrogates
-load('wccfullData.RData') # the time series of windowed cross correlatiojs (for triadic)
+load('wccfullData.RData') # the time series of windowed cross correlations (for triadic)
 
 wccres$max.loc = wccres$max.loc - 100 # center the lag term (1,201 to -100,100)
 
+##########################################################################
 #
-# triadic synchrony observed vs. surrogate
+# dyadic synchrony observed vs. surrogate, with both lmer and t-test check
 #
+##########################################################################
 
-# 10s window analysis
-lmo = lmer(winmax~cond+(1|triad),data=wccres) # max struct not possible
+#
+# 10s window analysis (maximum or minimum, etc.)
+#
+lmo = lmer(winmax~cond+(1+cond|triad),data=wccres) # singularity; tiny variance assoc. with random effect structure... so we do follow-up t-test below
 pander(print_stats(lmo))
 hist(resid(lmo)) # check approx normal
 
@@ -44,7 +47,9 @@ agg=cbind(agg[1:35,],agg[36:70,])
 mean(agg[1:35,1]==agg[1:35,4]) # ensure alignment
 t.test(agg[,3]-agg[,6])
 
-# cross correlation function
+#
+# cross correlation function (correlation at lag of 0, synchrony)
+#
 lmo = lmer(ccf~cond+(1+cond|triad),data=ccfres[ccfres$lag==0,]) # correlation higher at lag 0
 pander(print_stats(lmo))
 hist(resid(lmo)) # check approx normal
@@ -55,7 +60,9 @@ agg=cbind(agg[1:35,],agg[36:70,])
 mean(agg[1:35,1]==agg[1:35,4]) # ensure alignment
 t.test(agg[,3]-agg[,6])
 
+#
 # reliable for each pair, too; using lag of 0 comparing to surrogate (vrt) and observed (obs)
+#
 lmo = lmer(ccf~cond+(1+cond|triad),data=ccfres[ccfres$lag==0&ccfres$typ=='LC',])
 pander(print_stats(lmo))
 lmo = lmer(ccf~cond+(1+cond|triad),data=ccfres[ccfres$lag==0&ccfres$typ=='CR',])
@@ -63,15 +70,20 @@ pander(print_stats(lmo))
 lmo = lmer(ccf~cond+(1+cond|triad),data=ccfres[ccfres$lag==0&ccfres$typ=='LR',])
 pander(print_stats(lmo))
 
+########################################################################
 #
 # triad synchrony: is the triad itself moving together?
 #
+########################################################################
 
+#### DATA ##############################################################
+#
 # let's get the CCFs of the correlations: OBSERVED (obs)
 # this looks more complicated than it is... simply: loop through triads
 # and for each compute the cross correlation of their windowed correlations (over time)
 # since we have 3 people, we do this three times (3 pairs)... then average
 # *NB: wccCcf = cross-correlation function of the windowed cross-correlations (second-order)
+#
 triads = unique(wccfull$triad)
 for (i in 1:35) {
   print(i)
@@ -97,8 +109,8 @@ for (i in 1:35) {
   wccCcf = rbind(wccCcf,data.frame(triad=i,cond='obs',lag=-12:12,r=x))
   
 }
-par(mfrow=c(1,1))
-# for plotting; assume low DF (# of triads, not pairs)
+
+# for plotting; assume low DF (# of triads, not surrogates; df = 34; se = n/sq(n))
 intactTriad = aggregate(r~lag,data=wccCcf,function(x) { c(m=mean(x),se=sd(x)/sqrt(35))})
 wccCcfObs = wccCcf
 
@@ -110,7 +122,7 @@ for (i in 1:35) {
     tmp1 = wccfull[wccfull$triad==triads[i]&wccfull$typ=='LC'&wccfull$cond=='vrt'&wccfull$n==n,]$wcc
     tmp2 = wccfull[wccfull$triad==triads[i]&wccfull$typ=='LR'&wccfull$cond=='vrt'&wccfull$n==n,]$wcc
     x = ccf(tmp1,tmp2,lag.max=12,plot=F)$acf
-    if (i==1) {
+    if (i==1 & n==1) {
       wccCcf = data.frame(triad=i,cond='vrt',lag=-12:12,r=x)
     } else {
       wccCcf = rbind(wccCcf,data.frame(triad=i,cond='vrt',lag=-12:12,r=x))
@@ -128,28 +140,43 @@ for (i in 1:35) {
   }
 }
 
-par(mfrow=c(1,1))
-
-# for plotting; assume low DF (# of triads, not surrogates)
+# for plotting; assume low DF (# of triads, not surrogates; df = 34; se = n/sq(n))
 surrogateTriad = aggregate(r~lag,data=wccCcf,function(x) { c(m=mean(x),se=sd(x)/sqrt(35))})
 # put them together (observed / surrogate)
 wccCcf = rbind(wccCcfObs,wccCcf)
 
+#### ANALYSIS/PLOT #########################################################
+
+par(mfrow=c(1,1)) # reset
+
+#
 # statistical test at lag 0
+#
 lmo = lmer(r~cond+(1+cond|triad),data=wccCcf[wccCcf$lag==0,])
 pander(print_stats(lmo))
+
+# let's make sure this holds on a paired-samples t-test... because maximal doesn't converge
+agg=aggregate(r~triad+cond,data=wccCcf[wccCcf$lag==0,],mean)
+agg=cbind(agg[1:35,],agg[36:70,])
+mean(agg[1:35,1]==agg[1:35,4]) # ensure alignment
+t.test(agg[,3]-agg[,6])
 
 # let's plot 'em now
 source('plotCCF.R')
 
+########################################################################
 #
 # exploratory regression analysis
-# 
+#
+########################################################################
+
 source('combineMansonData.R') # integrate with manson task/individual diff'ces data
 # note it stores only one of LC/CL, etc., averaging across positions
 # NB: makes mansonData
 
+#
 # again, treat as large repeated measures with a single intercept
+#
 lmo = lmer(wcc~as.factor(sex)+p1.income.zip+
              p1.primary.psycho+p2.facial+
              cultural.style+
@@ -163,17 +190,23 @@ lmo = lmer(wcc~as.factor(sex)+p1.income.zip+
              laughDat$X..SHARED+(1|triad),data=wccMansonData)
 print_stats(lmo)
 
+#
 # let's make sure these square away even with a full maximal model
+#
 lmo = lmer(wcc~cultural.style+language.style.match+laughDat$X..SHARED+(1+cultural.style+language.style.match+laughDat$X..SHARED|triad),data=wccMansonData)
 print_stats(lmo)
 
+#
 # if there's compensation, then there should be significant prediction by interaction
+#
 ccfmaxC = scale(mansonData$ccfmax) # scale all variables to center, and normalize
 lingstyleC = scale(mansonData$language.style.match)
 lmo = glmer(p1.pd.toward.p2~ccfmaxC*lingstyleC+(1|triad),data=mansonData,family=binomial)
 summary(lmo)
 
+#
 # what's the interaction; let's plot the apparently strongest interaction
+#
 pdf('figures/figure-5.pdf',height=5,width=9)
 par(mfrow=c(1,2))
 

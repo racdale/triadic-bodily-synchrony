@@ -1,4 +1,5 @@
 # first: set working directory to here
+
 mansonDataAll = read.csv('Manson_Convo_PD_data.csv',header=T,skip=1)
 colnames(mansonDataAll) = list('order','triad','code','chairs','p1.id','sex','p1.income.zip','p1.primary.psycho','p1.secondary.psycho','p2.facial','cultural.style','language.style.match','common.ground','p2.interrupts.p1','p1.pd.toward.p2','p2.pd.toward.p1','p1.rates.p2.warmth','p1.rates.p2.competence','p2.rates.p1.warmth','p2.rates.p1.competence')
 
@@ -33,9 +34,11 @@ for (i in 1:dim(wccresNew)[1]) { # integrating Manson data with body correlation
   mansonData[mansonData$chairs==reverseString(wccresNew[i,]$typ) & mansonData$triad==triad,21:25] = wccresNew[i,4:8]
 }
 
+#
 # let's retrieve the windowed correlation scores and treat this as a repeated
 # measures setup... multiple observations in 10s segments
 # increases power for the exploratory analysis as described in the main paper
+#
 wccMansonData = wccfull[wccfull$cond=='obs',]
 desiredCols = c('p1.id','sex','p1.income.zip','p1.primary.psycho','p2.facial',
                 'cultural.style','language.style.match','common.ground',
@@ -49,8 +52,11 @@ lapply(desiredCols,function(x) {
 l = nrow(wccMansonData)
 wccMansonDataRev = wccMansonData # so we can get the reverse-chair scores
 laughDat = c()
+
+#
 # a slow and lame loop... but we just do it once and we're done
 # *NB: wccMansonData = windowed correlations combined with Manson et al. covariates
+#
 for (i in 1:l) {
   print(i/l)
   ix=regexpr('_',wccMansonData[i,]$triad)[1]-1
@@ -65,4 +71,12 @@ for (i in 1:l) {
   mansonVect = mansonData[mansonData$chairs==revTyp&mansonData$triad==triad,]
   wccMansonData[i,7:18] = (wccMansonData[i,7:18] + subset(mansonVect,select=desiredCols))/2
 }
+
+#
+# let's check for Table 1 in paper... make sure we get the right N for SD:
+#
+tableData = mansonData[mansonData$chairs%in%c('LC','LR','CR'),]
+summary(tableData)
+sd(laughs$X..SHARED*100) # checking to confirm laughter rows in Table 1
+
 

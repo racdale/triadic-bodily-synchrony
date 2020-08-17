@@ -9,7 +9,7 @@ print_stats = function(lmo) {
 }
 
 #
-# calculate windowed cross correlation (a-la Boker et al.)
+# calculate windowed cross correlation (similar to Boker et al.)
 # input x time series, y time series, window size, and shift size
 # outputs sequence of lag-0 correlations at that window size
 #
@@ -79,28 +79,28 @@ plotCcfs = function(fl,wccres,ccfres) {
   subwcc = wccfull[wccfull$triad==fl&wccfull$cond=='obs',] # windowed correlation, over 300 samples
   subccf = ccfres[ccfres$triad==fl&ccfres$cond=='obs',] # cross correlation function across whole time series
   plotfl = paste('figures/dvs/',fl,'.pdf',sep='')
-  pdf(file=plotfl,height=5,width=5)
+  pdf(file=plotfl,height=6,width=6)
   
   par(mfrow=c(2,2),mar=c(4,4,2,2))
   dt = subwcc[subwcc$typ=='LC',]
-  plot(dt$t/60,dt$wcc,
+  plot(dt$t*1/6,dt$wcc,
        ylab='Correlation (r)',main='Left / Center Members',
        type='l',xlab='Time window (min)')
-  points(which.max(dt$wcc)/60,max(dt$wcc),pch=15,cex=2)
-  points(which.min(dt$wcc)/60,min(dt$wcc),pch=15,cex=2)
+  points(which.max(dt$wcc)/6,max(dt$wcc),pch=15,cex=2)
+  points(which.min(dt$wcc)/6,min(dt$wcc),pch=15,cex=2)
   dt = subccf[subccf$typ=='LC'&subccf$cond=='obs',]
-  plot(dt$lag*.033,dt$ccf,
+  plot(dt$lag*.03,dt$ccf,
        ylab='Correlation (r)',main='Left / Center Members',
        type='l',xlab='Relative lag (s)')
   points((which.max(dt$ccf)-100)*.033,max(dt$ccf),pch=15,cex=2)
   dt = subwcc[subwcc$typ=='CR',]
-  plot(dt$t/60,dt$wcc,
+  plot(dt$t*1/6,dt$wcc,
        ylab='Correlation (r)',main='Center / Right Members',
-       type='l',xlab='Time window (10 s)')
-  points(which.max(dt$wcc)/60,max(dt$wcc),pch=15,cex=2)
-  points(which.min(dt$wcc)/60,min(dt$wcc),pch=15,cex=2)
+       type='l',xlab='Time window (min)')
+  points(which.max(dt$wcc)/6,max(dt$wcc),pch=15,cex=2)
+  points(which.min(dt$wcc)/6,min(dt$wcc),pch=15,cex=2)
   dt = subccf[subccf$typ=='CR'&subccf$cond=='obs',]
-  plot(dt$lag*.033,dt$ccf,
+  plot(dt$lag*.03,dt$ccf,
        ylab='Correlation (r)',main='Center / Right Members',
        xlab='Relative lag (s)',type='l')
   points((which.max(dt$ccf)-100)*.033,max(dt$ccf),pch=15,cex=2)

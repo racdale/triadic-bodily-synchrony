@@ -58,7 +58,10 @@ laughDat = c()
 # *NB: wccMansonData = windowed correlations combined with Manson et al. covariates
 #
 for (i in 1:l) {
-  print(i/l)
+  if ((i-1) %% 300 == 0) {
+    print(paste('Integrating all windows... ',round(100*i/l),'% complete'))
+  }
+  
   ix=regexpr('_',wccMansonData[i,]$triad)[1]-1
   triad = as.numeric(substr(wccMansonData[i,]$triad,2,ix))
   # we do laughter as a separate vector since it came from another analysis of the videos
